@@ -31,11 +31,17 @@ npm run verify:public
 
 Run the full validation suite with `npm test`.
 
-## Private import format
+## Private import formats
 
 The canonical schema is [`schema/workout-data.schema.json`](schema/workout-data.schema.json).
 [`examples/fictional-demo-plan.json`](examples/fictional-demo-plan.json) is a
 safe example that can be imported into the app.
+
+Markdown plans are also parsed entirely in the browser. See
+[`examples/fictional-demo-plan.md`](examples/fictional-demo-plan.md) for the
+supported structure: day headings, numbered exercises, and `Sets & Reps`,
+`Rest`, and optional `Cue` fields. JSON remains the lossless backup format for
+plans plus workout history.
 
 ## GitHub Pages
 

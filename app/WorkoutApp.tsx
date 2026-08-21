@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createDemoData } from "./demo-plan";
+import { parseMarkdownWorkoutData } from "./markdown-import";
 import {
   clearPrivateData,
   loadPrivateData,
@@ -153,13 +154,29 @@ export function WorkoutApp() {
       return;
     }
     try {
-      const parsed: unknown = JSON.parse(await file.text());
+      const contents = await file.text();
+      const isMarkdown = /\.(?:md|markdown)$/i.test(file.name) || file.type === "text/markdown";
+      let parsed: unknown;
+      if (isMarkdown) {
+        const markdownData = parseMarkdownWorkoutData(contents);
+        const validDayIds = new Set(markdownData.plan.days.map((day) => day.id));
+        parsed = {
+          ...markdownData,
+          sessions: data?.sessions.filter((session) => validDayIds.has(session.dayId)) ?? [],
+        };
+      } else {
+        parsed = JSON.parse(contents);
+      }
       const validated = validatePrivateWorkoutData(parsed);
       await savePrivateData(validated);
       setData(validated);
       setSelectedDayId(chooseStartingDay(validated).id);
       setTab("today");
-      setMessage("Private plan imported on this device.");
+      setMessage(
+        isMarkdown
+          ? "Markdown plan parsed and stored privately on this device."
+          : "Private backup imported on this device.",
+      );
     } catch (importError) {
       setError(importError instanceof Error ? importError.message : "This file could not be imported.");
     } finally {
@@ -249,7 +266,7 @@ export function WorkoutApp() {
               <p className="eyebrow accent">Your plan stays yours</p>
               <h2>Bring your workout plan onto this device.</h2>
               <p>
-                Import a private JSON backup to begin. It is validated and stored in this browser only—never uploaded to this website.
+                Import a private Markdown plan or JSON backup to begin. It is parsed, validated, and stored in this browser only—never uploaded to this website.
               </p>
               <div className="button-row">
                 <button className="primary-button" onClick={() => fileInput.current?.click()} type="button">Import private plan</button>
@@ -259,7 +276,7 @@ export function WorkoutApp() {
                 ref={fileInput}
                 className="visually-hidden"
                 type="file"
-                accept="application/json,.json"
+                accept="application/json,text/markdown,.json,.md,.markdown"
                 onChange={(event) => event.target.files?.[0] && void importFile(event.target.files[0])}
               />
             </div>
@@ -380,7 +397,7 @@ export function WorkoutApp() {
           </section>
         ) : (
           <section className="data-layout">
-            <article className="data-card primary-data-card"><p className="eyebrow">Privacy boundary</p><h2>Your information never needs to leave this device.</h2><p>The website contains the interface and validation rules. Your imported plan, session history, and notes stay in this browser.</p><div className="data-actions"><button className="primary-button" onClick={() => fileInput.current?.click()} type="button">Import replacement</button><button className="secondary-button" onClick={() => downloadJson(data)} type="button">Export backup</button></div><input ref={fileInput} className="visually-hidden" type="file" accept="application/json,.json" onChange={(event) => event.target.files?.[0] && void importFile(event.target.files[0])} /></article>
+            <article className="data-card primary-data-card"><p className="eyebrow">Privacy boundary</p><h2>Your information never needs to leave this device.</h2><p>The website contains the interface and validation rules. Markdown and JSON files are read locally; your plan, session history, and notes stay in this browser.</p><div className="data-actions"><button className="primary-button" onClick={() => fileInput.current?.click()} type="button">Import Markdown or JSON</button><button className="secondary-button" onClick={() => downloadJson(data)} type="button">Export backup</button></div><input ref={fileInput} className="visually-hidden" type="file" accept="application/json,text/markdown,.json,.md,.markdown" onChange={(event) => event.target.files?.[0] && void importFile(event.target.files[0])} /></article>
             <article className="data-card"><span className="data-icon">◇</span><h3>Storage status</h3><p>{storageStatus === "granted" ? "Persistent browser storage has been requested successfully." : "This browser may clear site data under storage pressure. Export backups regularly."}</p></article>
             <article className="data-card danger-card"><span className="data-icon">×</span><h3>Clear this device</h3><p>Remove the imported plan and every session stored by this site in this browser.</p>{showClearConfirm ? <div className="confirm-row"><button onClick={() => void clearEverything()} type="button">Confirm deletion</button><button onClick={() => setShowClearConfirm(false)} type="button">Cancel</button></div> : <button onClick={() => setShowClearConfirm(true)} type="button">Clear private data</button>}</article>
           </section>
@@ -393,4 +410,3 @@ export function WorkoutApp() {
     </div>
   );
 }
-
