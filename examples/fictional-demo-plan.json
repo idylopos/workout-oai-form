@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "plan": {
+    "id": "fictional-demo-plan",
+    "title": "Balanced Strength Demo",
+    "description": "Fictional sample data for exploring the interface.",
+    "days": [
+      {
+        "id": "demo-day-a",
+        "label": "Day A · Full Body",
+        "shortLabel": "A",
+        "focus": "Controlled strength",
+        "weekday": 1,
+        "durationMinutes": 48,
+        "exercises": [
+          { "id": "demo-goblet-squat", "name": "Goblet squat", "sets": 3, "reps": "8–10", "restSeconds": 90, "cue": "Move through a comfortable range with a steady tempo.", "substitution": "Box squat" },
+          { "id": "demo-incline-pushup", "name": "Incline push-up", "sets": 3, "reps": "8–12", "restSeconds": 75, "cue": "Keep ribs stacked and finish each rep with control.", "substitution": "Machine chest press" },
+          { "id": "demo-cable-row", "name": "Seated cable row", "sets": 3, "reps": "10–12", "restSeconds": 75, "cue": "Lead with the elbows without shrugging.", "substitution": "Chest-supported row" }
+        ]
+      },
+      {
+        "id": "demo-day-b",
+        "label": "Day B · Hinge & Pull",
+        "shortLabel": "B",
+        "focus": "Posterior chain",
+        "weekday": 3,
+        "durationMinutes": 52,
+        "exercises": [
+          { "id": "demo-rdl", "name": "Dumbbell Romanian deadlift", "sets": 3, "reps": "8–10", "restSeconds": 120, "cue": "Keep the weights close and stop before the back rounds.", "substitution": "Cable pull-through" },
+          { "id": "demo-pulldown", "name": "Neutral-grip pulldown", "sets": 3, "reps": "10–12", "restSeconds": 75, "cue": "Pull toward the upper chest with a quiet torso.", "substitution": "Assisted pull-up" },
+          { "id": "demo-carry", "name": "Farmer carry", "sets": 3, "reps": "30 seconds", "restSeconds": 60, "cue": "Walk tall with slow, even steps.", "substitution": "Suitcase hold" }
+        ]
+      },
+      {
+        "id": "demo-day-c",
+        "label": "Day C · Mobility",
+        "shortLabel": "C",
+        "focus": "Move and recover",
+        "weekday": 6,
+        "durationMinutes": 28,
+        "exercises": [
+          { "id": "demo-walk", "name": "Easy walk", "sets": 1, "reps": "20 minutes", "cue": "Keep the pace conversational." },
+          { "id": "demo-mobility", "name": "Mobility flow", "sets": 2, "reps": "5 minutes", "restSeconds": 30, "cue": "Use pain-free ranges and relaxed breathing." }
+        ]
+      }
+    ]
+  },
+  "sessions": []
+}
+

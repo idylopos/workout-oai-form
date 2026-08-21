@@ -1,0 +1,8 @@
+title = "Form public application secret scan"
+
+[allowlist]
+description = "Known public-only fixtures"
+paths = [
+  '''examples/fictional-demo-plan\.json''',
+]
+
