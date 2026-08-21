@@ -43,6 +43,16 @@ supported structure: day headings, numbered exercises, and `Sets & Reps`,
 `Rest`, and optional `Cue` fields. JSON remains the lossless backup format for
 plans plus workout history.
 
+Downloadable, LLM-friendly templates are published with the app:
+
+- [`public/templates/plan-import-template.md`](public/templates/plan-import-template.md)
+  creates or replaces a plan.
+- [`public/templates/workout-history-import-template.json`](public/templates/workout-history-import-template.json)
+  adds sessions to the current plan. Readable day and exercise names are matched
+  case-insensitively; spacing and dash variations are accepted. Existing sessions
+  on the same date and workout day are merged, with imported exercise results
+  taking precedence.
+
 ## GitHub Pages
 
 1. Push this directory to a new repository that contains no private source files.

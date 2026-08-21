@@ -29,7 +29,7 @@ body {
 
 button, input, textarea { font: inherit; }
 button { color: inherit; }
-button:focus-visible, input:focus-visible, textarea:focus-visible {
+button:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visible {
   outline: 3px solid rgba(29, 85, 80, 0.28);
   outline-offset: 2px;
 }
@@ -186,6 +186,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible {
 .primary-button:hover { background: var(--teal); }
 .secondary-button { background: transparent; border-color: var(--line); }
 .secondary-button:hover { background: #f3f1e9; }
+.template-links { display: flex; flex-wrap: wrap; gap: .45rem .8rem; align-items: center; margin-top: 1rem; font-size: .7rem; color: var(--muted); }
+.template-links a { color: var(--teal); font-weight: 800; text-underline-offset: 3px; }
 .privacy-illustration { position: absolute; right: -3rem; top: 50%; transform: translateY(-50%); width: 37%; aspect-ratio: 1; }
 .orbit { position: absolute; border-radius: 50%; border: 1px solid rgba(29,85,80,.17); }
 .orbit-one { inset: 2%; }
@@ -299,6 +301,9 @@ button:focus-visible, input:focus-visible, textarea:focus-visible {
 .primary-data-card .primary-button { background: var(--lime); color: var(--teal-dark); }
 .primary-data-card .secondary-button { color: white; border-color: rgba(255,255,255,.3); }
 .data-icon { font-size: 1.3rem; color: var(--teal); }
+.template-downloads { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: 1rem; }
+.template-downloads a { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 999px; padding: .7rem .9rem; color: var(--teal); font-size: .72rem; font-weight: 800; text-decoration: none; }
+.template-downloads a:hover { background: var(--paper); }
 .danger-card > button, .confirm-row button { border: 0; background: transparent; color: var(--danger); font-weight: 800; padding: 0; cursor: pointer; font-size: .72rem; }
 .confirm-row button:first-child { background: var(--danger); color: white; padding: .65rem .8rem; border-radius: 8px; }
 .confirm-row button:last-child { color: var(--muted); padding: .65rem; }

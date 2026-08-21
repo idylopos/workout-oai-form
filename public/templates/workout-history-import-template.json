@@ -1,0 +1,38 @@
+{
+  "_instructions": [
+    "Return valid JSON only and keep format and version unchanged.",
+    "The day value must match a day label in the plan. Capitalization, spacing, and dash style may differ.",
+    "The exercise value must match an exercise name within that day.",
+    "Use YYYY-MM-DD dates and true or false for finished and completed.",
+    "For multiple sets, put values into a short string such as 60 kg / 60 kg / 55 kg or 8 / 8 / 7.",
+    "Use an empty sessions array when there is no history. Do not invent workouts or measurements."
+  ],
+  "format": "form-workout-history",
+  "version": 1,
+  "sessions": [
+    {
+      "date": "2026-01-15",
+      "day": "Monday — Strength A",
+      "finished": true,
+      "notes": "Fictional example session. Replace or remove this text.",
+      "exercises": [
+        {
+          "exercise": "Goblet squat",
+          "completed": true,
+          "load": "16 kg / 16 kg / 16 kg",
+          "reps": "10 / 10 / 9",
+          "rpe": "7 / 7 / 8",
+          "discomfort": "0"
+        },
+        {
+          "exercise": "Seated cable row",
+          "completed": true,
+          "load": "30 kg",
+          "reps": "12 / 12 / 11",
+          "rpe": "8",
+          "discomfort": "0"
+        }
+      ]
+    }
+  ]
+}
