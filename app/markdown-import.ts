@@ -78,7 +78,9 @@ function parseDayHeading(line: string, lineIndex: number): DayHeading | null {
   return { lineIndex, weekdayName: weekday[1], planLabel: weekday[2].trim() };
 }
 
-function parseExerciseHeading(line: string): { order: number; title: string } | null {
+function parseExerciseHeading(
+  line: string,
+): { order: number; title: string; inlinePrescription?: string } | null {
   const normalized = line.replace(/\*\*/g, "").trim();
   const match = normalized.match(/^(?:#{3,6}\s*)?(\d+)[.)]\s+(.+?)\s*$/);
   if (!match) return null;
@@ -89,7 +91,12 @@ function parseExerciseHeading(line: string): { order: number; title: string } | 
   ) {
     return null;
   }
-  return { order: Number(match[1]), title: match[2] };
+  const compact = match[2].match(/^(.+?)\s+(?:—|–|-)\s+(.+)$/);
+  return {
+    order: Number(match[1]),
+    title: compact?.[1] ?? match[2],
+    inlinePrescription: compact?.[2],
+  };
 }
 
 function fieldValue(lines: string[], label: RegExp): string | undefined {
@@ -102,9 +109,10 @@ function fieldValue(lines: string[], label: RegExp): string | undefined {
 }
 
 function parsePrescription(value: string): { sets: number; reps: string } | null {
-  const match = value.match(/^(\d+)\s*(?:sets?)?\s*(?:[x×]\s*)?(.+)$/i);
+  const match = value.match(/^(\d+(?:\s*[-–]\s*\d+)?)\s*(?:sets?)?\s*(?:[x×]\s*)?(.+)$/i);
   if (!match) return null;
-  const sets = Number(match[1]);
+  const setValues = [...match[1].matchAll(/\d+/g)].map((item) => Number(item[0]));
+  const sets = Math.max(...setValues);
   const reps = match[2]
     .replace(/\breps?\b/gi, "")
     .replace(/\s*\((?:load|approx\.?|about)[^)]*\)\s*$/i, "")
@@ -112,6 +120,80 @@ function parsePrescription(value: string): { sets: number; reps: string } | null
     .trim();
   if (!Number.isInteger(sets) || sets < 1 || sets > 20 || !reps) return null;
   return { sets, reps: reps.slice(0, 80) };
+}
+
+type InlinePrescription = {
+  sets: number;
+  reps: string;
+  restSeconds?: number;
+  cue?: string;
+};
+
+function parseInlinePrescription(value: string): InlinePrescription {
+  const cleaned = cleanInline(value);
+  const segments = cleaned
+    .split(/\s*·\s*/)
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+  const restSegment = segments.find((segment) => /\brest\b/i.test(segment));
+  const contentSegments = segments.filter((segment) => !/\brest\b/i.test(segment));
+  const cross = cleaned.match(/(\d+(?:\s*[-–]\s*\d+)?)\s*[x×]\s*([^;·]+)/i);
+
+  if (cross && !/^Block\s+\d/i.test(cleaned)) {
+    const setValues = [...cross[1].matchAll(/\d+/g)].map((item) => Number(item[0]));
+    const setRange = setValues.length > 1 ? `${cross[1]} sets` : undefined;
+    const startsWithPrescription = new RegExp(
+      `^${cross[1].replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*[x×]`,
+      "i",
+    ).test(cleaned);
+    const instructionSegments = startsWithPrescription ? contentSegments.slice(1) : contentSegments;
+    const cueParts = [setRange ? `Source prescription: ${setRange}.` : undefined]
+      .concat(instructionSegments)
+      .filter((part): part is string => Boolean(part));
+    return {
+      sets: Math.max(...setValues),
+      reps: cross[2].replace(/\breps?\b/gi, "").trim().slice(0, 80),
+      restSeconds: parseRestSeconds(restSegment),
+      cue: cueParts.join(" ").slice(0, 500) || undefined,
+    };
+  }
+
+  const rounds = contentSegments[0]?.match(/^(\d+(?:\s*[-–]\s*\d+)?)\s+rounds?\b/i);
+  if (rounds) {
+    const setValues = [...rounds[1].matchAll(/\d+/g)].map((item) => Number(item[0]));
+    return {
+      sets: Math.max(...setValues),
+      reps: (contentSegments[1] ?? "1 round").slice(0, 80),
+      restSeconds: parseRestSeconds(restSegment),
+      cue: contentSegments.slice(2).join(". ").slice(0, 500) || undefined,
+    };
+  }
+
+  if (/^Block\s+\d/i.test(cleaned)) {
+    return {
+      sets: 1,
+      reps: "Follow current training block",
+      restSeconds: parseRestSeconds(restSegment),
+      cue: contentSegments.join(". ").slice(0, 500),
+    };
+  }
+
+  const timed = contentSegments[0]?.match(/^\d+(?:\s*[-–]\s*\d+)?\s*(?:min|km|breaths?)/i);
+  if (timed) {
+    return {
+      sets: 1,
+      reps: contentSegments[0].slice(0, 80),
+      restSeconds: parseRestSeconds(restSegment),
+      cue: contentSegments.slice(1).join(". ").slice(0, 500) || undefined,
+    };
+  }
+
+  return {
+    sets: 1,
+    reps: /progression|performance step/i.test(cleaned) ? "Current progression step" : "As prescribed",
+    restSeconds: parseRestSeconds(restSegment),
+    cue: contentSegments.join(". ").slice(0, 500) || undefined,
+  };
 }
 
 function parseRestSeconds(value: string | undefined): number | undefined {
@@ -171,7 +253,12 @@ export function parseMarkdownWorkoutData(markdown: string): PrivateWorkoutData {
         const exercise = parseExerciseHeading(line);
         return exercise ? { ...exercise, lineIndex } : null;
       })
-      .filter((exercise): exercise is { order: number; title: string; lineIndex: number } =>
+      .filter((exercise): exercise is {
+        order: number;
+        title: string;
+        inlinePrescription?: string;
+        lineIndex: number;
+      } =>
         exercise !== null,
       );
 
@@ -186,15 +273,22 @@ export function parseMarkdownWorkoutData(markdown: string): PrivateWorkoutData {
       const blockEnd = exerciseStarts[exerciseIndex + 1]?.lineIndex ?? dayLines.length;
       const block = dayLines.slice(start.lineIndex + 1, blockEnd);
       const prescriptionText = fieldValue(block, /^(sets?\s*(?:&|and|\/)\s*reps?|prescription)$/i);
-      if (!prescriptionText) return;
-      const prescription = parsePrescription(prescriptionText);
+      const inline = start.inlinePrescription
+        ? parseInlinePrescription(start.inlinePrescription)
+        : undefined;
+      if (!prescriptionText && !inline) return;
+      const prescription = prescriptionText ? parsePrescription(prescriptionText) : inline;
       if (!prescription) {
         throw new Error(`Could not read sets and reps for “${cleanInline(start.title)}”.`);
       }
 
       const names = exerciseNames(start.title);
-      const cue = fieldValue(block, /^cue$/i)?.replace(/^['“”"]+|['“”"]+$/g, "").slice(0, 500);
-      const rest = parseRestSeconds(fieldValue(block, /^(rest|rest between sets)$/i));
+      const cue = (
+        fieldValue(block, /^(cue|watch)$/i)?.replace(/^['“”"]+|['“”"]+$/g, "") ?? inline?.cue
+      )?.slice(0, 500);
+      const rest = parseRestSeconds(fieldValue(block, /^(rest|rest between sets)$/i)) ?? inline?.restSeconds;
+      const substitution =
+        names.substitution ?? fieldValue(block, /^alternative$/i)?.slice(0, 240);
       exercises.push({
         id: uniqueId(`${dayId}-${slug(names.name, `exercise-${start.order}`)}`, usedIds),
         name: names.name,
@@ -202,7 +296,7 @@ export function parseMarkdownWorkoutData(markdown: string): PrivateWorkoutData {
         reps: prescription.reps,
         restSeconds: rest,
         cue,
-        substitution: names.substitution,
+        substitution,
       });
     });
 

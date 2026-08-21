@@ -43,3 +43,39 @@ test("numbered protocol sections are not treated as exercises", () => {
   assert.equal(data.plan.days[0].exercises.length, 1);
   assert.equal(data.plan.days[0].exercises[0].name, "Cable Row");
 });
+
+test("compact exercise lines preserve prescriptions, rest, cues, and alternatives", () => {
+  const data = parseMarkdownWorkoutData(`# Compact Plan
+
+### Monday — Legs A + bicycle
+
+#### Exercises and activities
+1. **Box squat** — 3 × 5–8 · rest 3 min
+   - **Watch:** Keep each repetition controlled.
+
+2. **Assisted curl** — 1–2 × 3–5 · rest 2 min
+   - **Alternative:** Use a machine curl for 2 × 8–12.
+
+3. **Mobility flow** — 2 rounds · 45 sec / side
+
+4. **Easy run** — Block 1: 25 min easy · Block 2: 30 min easy
+
+5. **Pull-up progression** — Choose your current performance step below · rest 3 min
+`);
+
+  const exercises = data.plan.days[0].exercises;
+  assert.equal(exercises.length, 5);
+  assert.deepEqual(
+    exercises.map(({ name, sets, reps, restSeconds }) => ({ name, sets, reps, restSeconds })),
+    [
+      { name: "Box squat", sets: 3, reps: "5–8", restSeconds: 180 },
+      { name: "Assisted curl", sets: 2, reps: "3–5", restSeconds: 120 },
+      { name: "Mobility flow", sets: 2, reps: "45 sec / side", restSeconds: undefined },
+      { name: "Easy run", sets: 1, reps: "Follow current training block", restSeconds: undefined },
+      { name: "Pull-up progression", sets: 1, reps: "Current progression step", restSeconds: 180 },
+    ],
+  );
+  assert.equal(exercises[0].cue, "Keep each repetition controlled.");
+  assert.match(exercises[1].cue, /Source prescription: 1–2 sets/);
+  assert.equal(exercises[1].substitution, "Use a machine curl for 2 × 8–12.");
+});
