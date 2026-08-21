@@ -29,6 +29,7 @@ export type WorkoutPlan = {
 
 export type ExerciseResult = {
   exerciseId: string;
+  exerciseName?: string;
   completed: boolean;
   load?: string;
   reps?: string;
@@ -51,4 +52,3 @@ export type PrivateWorkoutData = {
   plan: WorkoutPlan;
   sessions: WorkoutSession[];
 };
-

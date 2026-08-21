@@ -10,6 +10,15 @@ export const WORKOUT_HISTORY_FORMAT = "form-workout-history" as const;
 
 const MAX_SESSIONS = 5000;
 const MAX_RESULTS_PER_SESSION = 40;
+const WEEKDAY_NAMES = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+] as const;
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -64,20 +73,40 @@ function matchDay(input: string, plan: WorkoutPlan, field: string): WorkoutDay {
   return matchOne(
     input,
     plan.days,
-    (day) => [day.label, day.shortLabel, day.id],
+    (day) => [
+      day.label,
+      day.shortLabel,
+      day.id,
+      ...(day.weekday === undefined ? [] : [WEEKDAY_NAMES[day.weekday]]),
+    ],
     field,
     "workout day",
   );
 }
 
-function matchExercise(input: string, day: WorkoutDay, field: string): Exercise {
-  return matchOne(
-    input,
-    day.exercises,
-    (exercise) => [exercise.name, exercise.id],
-    field,
-    `exercise on ${day.label}`,
+function matchExercise(input: string, day: WorkoutDay, field: string): Exercise | undefined {
+  const normalized = normalizeLookup(input);
+  const matches = day.exercises.filter((exercise) =>
+    [exercise.name, exercise.id].some((alias) => normalizeLookup(alias) === normalized),
   );
+  if (matches.length > 1) {
+    throw new Error(`${field} "${input}" matches more than one exercise on ${day.label}.`);
+  }
+  return matches[0];
+}
+
+function archivedExerciseId(name: string): string {
+  const normalized = normalizeLookup(name);
+  const slug = normalized
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 52) || "exercise";
+  let hash = 2166136261;
+  for (let index = 0; index < normalized.length; index += 1) {
+    hash ^= normalized.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return `archived-${slug}-${(hash >>> 0).toString(36)}`;
 }
 
 function parseDate(value: unknown, field: string): string {
@@ -100,7 +129,8 @@ function parseResult(value: unknown, day: WorkoutDay, path: string): ExerciseRes
     throw new Error(`${path}.completed must be true or false.`);
   }
   return {
-    exerciseId: exercise.id,
+    exerciseId: exercise?.id ?? archivedExerciseId(exerciseName),
+    exerciseName: exercise?.name ?? exerciseName,
     completed: value.completed,
     load: optionalText(value.load, `${path}.load`, 40),
     reps: optionalText(value.reps, `${path}.reps`, 40),

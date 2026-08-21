@@ -57,6 +57,7 @@
       "required": ["exerciseId", "completed"],
       "properties": {
         "exerciseId": { "$ref": "#/$defs/id" },
+        "exerciseName": { "type": "string", "minLength": 1, "maxLength": 160 },
         "completed": { "type": "boolean" },
         "load": { "type": "string", "minLength": 1, "maxLength": 40 },
         "reps": { "type": "string", "minLength": 1, "maxLength": 40 },
@@ -79,4 +80,3 @@
     }
   }
 }
-

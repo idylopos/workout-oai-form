@@ -117,6 +117,7 @@ function parseSessions(value: unknown, plan: WorkoutPlan): WorkoutSession[] {
         }
         return {
           exerciseId: text(result.exerciseId, `${resultPath}.exerciseId`, 80),
+          exerciseName: optionalText(result.exerciseName, `${resultPath}.exerciseName`, 160),
           completed: result.completed,
           load: optionalText(result.load, `${resultPath}.load`, 40),
           reps: optionalText(result.reps, `${resultPath}.reps`, 40),
@@ -141,4 +142,3 @@ export function validatePrivateWorkoutData(value: unknown): PrivateWorkoutData {
     sessions: parseSessions(value.sessions, plan),
   };
 }
-
